@@ -1,3 +1,4 @@
+
 # Prozorro chronograph
 
 ## Install
@@ -11,13 +12,14 @@ pip install -r requirements.txt
 ```
 
 2. Optional for running tests
+
+Clone and config openprocurement.api
 ```
 git clone git@github.com:ProzorroUKR/openprocurement.api.git src/opcr
 cp etc/*.ini src/opcr/etc/
 ```
 
-To run tests
-
+Setup
 - ```docker-compose up api```
 - ```pip install -e .```
 
