@@ -7,20 +7,8 @@ services:
       MONGODB_ROOT_PASSWORD: example
     logging:
       driver: "none"
-
-  mongo-express:
-    image: mongo-express
-    restart: always
-    depends_on:
-      - mongo
     ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      ME_CONFIG_MONGODB_SERVER: mongo
-    logging:
-      driver: "none"
+    - 27017:27017
 
   chronograph:
     build: .
@@ -35,3 +23,26 @@ services:
       - mongo
     volumes:
       - "./src:/app"
+
+  couchdb:
+    image: "couchdb:1.6"
+    ports:
+      - 5984:5984
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: admin
+
+  api:
+    build: src/opcr
+    environment:
+      SANDBOX_MODE: 'True'
+    depends_on:
+      - couchdb
+      - mongo
+    volumes:
+      - "./src/opcr:/api/src/openprocurement:delegated"
+      - "./src/opcr/docs:/api/docs:delegated"
+      - "./src/opcr/etc:/api/etc:delegated"
+    ports:
+      - "8000:80"
+    command: [ "gunicorn", "--bind", "0.0.0.0:80", "-k", "gevent", "--paste", "etc/service.ini", "--graceful-timeout=60", "--timeout=3600" ]

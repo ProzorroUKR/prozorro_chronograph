@@ -13,32 +13,17 @@ pip install -r requirements.txt
 2. Optional for running tests
 ```
 git clone git@github.com:ProzorroUKR/openprocurement.api.git src/opcr
-```
-Change in src/opcr/requirements.txt
-```
-python-json-logger==2.0.1
-```
-to
-```
-python-json-logger==0.1.11
-```
-then run
-```
-pip install -e src/opcr
+cp etc/*.ini src/opcr/etc/
 ```
 
 To run tests
 
-- ```docker-compose up api``` in dev-env
+- ```docker-compose up api```
 - ```pip install -e .```
-- Add this strings in end of file ```dev-env/api/etc/auth.ini```
-```
-[admins]
-test = token
-```
-- Startup mongo on host and port as set in ```tests/__init__.py``` or config to yourself
 
 Then you can run tests
 ```
 pytest tests/
 ```
+
+If you want config manually, don't forget set needed variables in ```tests/__init__.py```

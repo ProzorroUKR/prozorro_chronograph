@@ -73,10 +73,22 @@ class BaseTenderTest(BaseTest):
     initial_data = test_tender_data
     initial_bids = None
     sandbox = False
+    cookies = None
+
+    async def setup_cookies(self):
+        async with ClientSession() as session:
+            data = await session.options(f"{PUBLIC_API_HOST}/api/2.5/tenders")
+            server_id_cookie = data.cookies["SERVER_ID"].value
+        self.cookies = {"SERVER_ID": server_id_cookie}
+
+    async def get_cookies(self):
+        if self.cookies is None:
+            await self.setup_cookies()
+        return self.cookies
 
     async def create_tender(self):
-        session = ClientSession()
-        await session.options(f"{PUBLIC_API_HOST}/api/2.5/tenders")
+        cookies = await self.get_cookies()
+        session = ClientSession(cookies=cookies)
         resp = await session.post(
             f"{PUBLIC_API_HOST}/api/2.5/tenders",
             data=json.dumps({"data": self.initial_data}),
@@ -153,19 +165,18 @@ class BaseTenderTest(BaseTest):
         return tender_id
 
     async def config_tender(self, tender_id, update_data):
-        session = ClientSession()
-        await session.options(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
-        resp = await session.patch(
-            f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}",
-            data=json.dumps({"data": update_data}),
-            headers=self.headers
-        )
-        data = await resp.json()
+        cookies = await self.get_cookies()
+        async with ClientSession(cookies=cookies) as session:
+            await session.options(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
+            resp = await session.patch(
+                f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}",
+                data=json.dumps({"data": update_data}),
+                headers=self.headers
+            )
+            data = await resp.json()
         assert resp.status == 200
         assert data["data"]["enquiryPeriod"] == update_data["enquiryPeriod"]
         assert data["data"]["tenderPeriod"] == update_data["tenderPeriod"]
-
-        await session.close()
 
     @pytest.fixture
     def tender_id(self, event_loop, couch):

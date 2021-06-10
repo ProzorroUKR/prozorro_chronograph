@@ -28,19 +28,19 @@ class TestTender3(BaseTenderTest):
     initial_bids = test_bids
 
     async def test_switch_to_auction(self, tender_id, scheduler):
-        async with ClientSession() as session:
+        async with ClientSession(cookies=self.cookies) as session:
             with patch("prozorro_chronograph.scheduler.SESSION", session):
                 await recheck_tender(tender_id)
             resp = await session.get(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
-        data = await resp.json()
+            data = await resp.json()
         assert data["data"]["status"] == "active.auction"
 
     async def test_reschedule_auction(self, tender_id, scheduler, db, couch):
-        async with ClientSession() as session:
+        async with ClientSession(cookies=self.cookies) as session:
             with patch("prozorro_chronograph.scheduler.SESSION", session):
                 await recheck_tender(tender_id)
             resp = await session.get(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
-        data = await resp.json()
+            data = await resp.json()
         assert data["data"]["status"] == "active.auction"
         if self.initial_lots:
             assert "auctionPeriod" not in data["data"]
@@ -56,7 +56,7 @@ class TestTender3(BaseTenderTest):
             assert data["data"]["auctionPeriod"]["shouldStartAfter"] >= \
                    data["data"]["auctionPeriod"].get("startDate", "")
 
-        async with ClientSession() as session:
+        async with ClientSession(cookies=self.cookies) as session:
             with patch("prozorro_chronograph.scheduler.SESSION", session):
                 with patch("prozorro_chronograph.storage.get_mongodb_collection", MagicMock(return_value=db.plans)):
                     await resync_tender(tender_id)
@@ -72,9 +72,9 @@ class TestTender3(BaseTenderTest):
             data["auctionPeriod"]["startDate"] = (datetime.now(TZ) - timedelta(hours=1)).isoformat()
         couch.save(data)
 
-        async with ClientSession() as session:
+        async with ClientSession(cookies=self.cookies) as session:
             resp = await session.get(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
-        data = await resp.json()
+            data = await resp.json()
         assert data["data"]["status"] == "active.auction"
 
         if self.initial_lots:
@@ -91,12 +91,12 @@ class TestTender3(BaseTenderTest):
             assert data["data"]["auctionPeriod"]["shouldStartAfter"] >= \
                    data["data"]["auctionPeriod"]["startDate"]
 
-        async with ClientSession() as session:
+        async with ClientSession(cookies=self.cookies) as session:
             with patch("prozorro_chronograph.scheduler.SESSION", session):
                 with patch("prozorro_chronograph.storage.get_mongodb_collection", MagicMock(return_value=db.plans)):
                     await resync_tender(tender_id)
                 resp = await session.get(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
-        data = await resp.json()
+            data = await resp.json()
         assert resp.status == 200
         if self.initial_lots:
             assert "auctionPeriod" in data["data"]["lots"][0]
