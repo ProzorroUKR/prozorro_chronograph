@@ -7,7 +7,6 @@ import asyncio
 from aiohttp import ClientSession
 from random import randint
 from datetime import datetime, timedelta
-from iso8601 import parse_date
 from prozorro_crawler.storage import get_feed_position
 
 from prozorro_chronograph.storage import (
@@ -20,7 +19,7 @@ from prozorro_chronograph.storage import (
 )
 from prozorro_chronograph.settings import (
     TZ,
-    PUBLIC_API_HOST,
+    BASE_URL,
     CHRONOGRAPH_HOST,
     API_TOKEN,
     SANDBOX_MODE,
@@ -37,6 +36,7 @@ from prozorro_chronograph.utils import (
     randomize,
     calc_auction_end_time,
     skipped_days,
+    parse_date,
 )
 
 SESSION = ClientSession()
@@ -126,11 +126,11 @@ async def planning_auction(tender, start, quick=False, lot_id=None):
 
 async def check_auction(tender):
     auction_time = tender.get("auctionPeriod", {}).get("startDate") and parse_date(
-        tender.get("auctionPeriod", {}).get("startDate"), TZ
+        tender.get("auctionPeriod", {}).get("startDate")
     )
     lots = dict(
         [
-            (i["id"], parse_date(i.get("auctionPeriod", {}).get("startDate"), TZ))
+            (i["id"], parse_date(i.get("auctionPeriod", {}).get("startDate")))
             for i in tender.get("lots", [])
             if i.get("auctionPeriod", {}).get("startDate")
         ]
@@ -264,13 +264,13 @@ async def process_listing(server_id_cookie, tender):
         [
             "shouldStartAfter" in i.get("auctionPeriod", {})
             and parse_date(i["auctionPeriod"]["shouldStartAfter"], TZ).astimezone(TZ)
-            > parse_date(i["auctionPeriod"].get("startDate", "0001"), TZ)
+            > parse_date(i["auctionPeriod"].get("startDate", "0001-01-03"), TZ)
             for i in tender.get("lots", [])
         ]
     ) or (
         "shouldStartAfter" in tender.get("auctionPeriod", {})
         and parse_date(tender["auctionPeriod"]["shouldStartAfter"], TZ).astimezone(TZ)
-        > parse_date(tender["auctionPeriod"].get("startDate", "0001"), TZ)
+        > parse_date(tender["auctionPeriod"].get("startDate", "0001-01-03"), TZ)
     ):
         resync_job = scheduler.get_job(f"resync_{tid}")
         if not resync_job or resync_job.next_run_time > run_date + timedelta(minutes=1):
@@ -288,7 +288,7 @@ async def process_listing(server_id_cookie, tender):
 
 
 async def recheck_tender(tender_id):
-    url = PUBLIC_API_HOST + "/api/2.5/tenders/" + tender_id
+    url = f"{BASE_URL}/{tender_id}"
     next_check = None
     recheck_url = CHRONOGRAPH_HOST + "/recheck/" + tender_id
     await SESSION.options(url)
@@ -348,8 +348,7 @@ async def recheck_tender(tender_id):
 
 
 async def resync_tender(tender_id):
-    url = PUBLIC_API_HOST + "/api/2.5/tenders/" + tender_id
-    next_check = None
+    url = f"{BASE_URL}/{tender_id}"
     recheck_url = CHRONOGRAPH_HOST + "/recheck/" + tender_id
     resync_url = CHRONOGRAPH_HOST + "/resync/" + tender_id
     next_check = None

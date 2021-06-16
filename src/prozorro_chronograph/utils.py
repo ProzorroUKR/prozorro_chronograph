@@ -1,7 +1,8 @@
-# TODO: добавить parse_date() и ciso8601
-
 from datetime import datetime, timedelta
 from random import randint
+from ciso8601 import parse_datetime
+from pytz import timezone, utc
+from typing import Optional
 
 from prozorro_chronograph.settings import (
     TZ,
@@ -34,3 +35,10 @@ def skipped_days(days):
     if days:
         days_str = f" Skipped {days} full days."
     return days_str
+
+
+def parse_date(value: str, default_timezone: Optional[timezone] = utc) -> datetime:
+    date = parse_datetime(value)
+    if not date.tzinfo and default_timezone is not None:
+        date = default_timezone.localize(date)
+    return date

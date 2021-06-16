@@ -1,23 +1,21 @@
-# TODO: Добавить mongo security (users, permissions)
-
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import timedelta
-from iso8601 import parse_date
 import standards
 
 from prozorro_chronograph.settings import (
-    MONGODB_COLLECTION,
+    MONGODB_PLANS_COLLECTION,
     MONGODB_CONFIG_COLLECTION,
     MONGODB_DATABASE,
     MONGODB_URL,
     WORKING_DAY_START,
     TZ,
 )
+from prozorro_chronograph.utils import parse_date
 
 DB_CONNECTION = None
 
 
-def get_mongodb_collection(collection_name=MONGODB_COLLECTION):
+def get_mongodb_collection(collection_name=MONGODB_PLANS_COLLECTION):
     global DB_CONNECTION
     DB_CONNECTION = DB_CONNECTION or AsyncIOMotorClient(MONGODB_URL)
     db = getattr(DB_CONNECTION, MONGODB_DATABASE)
@@ -84,7 +82,7 @@ async def get_streams():
 
 async def get_date(mode, date):
     plan_id = f"plan{mode}_{date.isoformat()}"
-    collection = get_mongodb_collection(MONGODB_COLLECTION)
+    collection = get_mongodb_collection(MONGODB_PLANS_COLLECTION)
     plan = await collection.find_one({"_id": plan_id})
     if plan is None:
         plan = {"_id": plan_id}
@@ -95,7 +93,7 @@ async def get_date(mode, date):
 
 
 async def set_date(plan_id, end_time, stream_id, tender_id, lot_id, start_time, new_slot=True):
-    collection = get_mongodb_collection(MONGODB_COLLECTION)
+    collection = get_mongodb_collection(MONGODB_PLANS_COLLECTION)
 
     if new_slot:
         time = end_time.isoformat()
@@ -172,7 +170,7 @@ def check_slot_to_be_free(lot_id, auction_time, lots, plan_time):
 
 
 async def free_slots(tender_id, auction_time, lots):
-    collection = get_mongodb_collection(MONGODB_COLLECTION)
+    collection = get_mongodb_collection(MONGODB_PLANS_COLLECTION)
 
     async for doc in collection.aggregate(
         [
