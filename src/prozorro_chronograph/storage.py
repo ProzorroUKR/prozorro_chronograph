@@ -1,6 +1,7 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import timedelta
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
+from datetime import timedelta, datetime, time
 import standards
+from typing import Tuple
 
 from prozorro_chronograph.settings import (
     MONGODB_PLANS_COLLECTION,
@@ -15,7 +16,7 @@ from prozorro_chronograph.utils import parse_date
 DB_CONNECTION = None
 
 
-def get_mongodb_collection(collection_name=MONGODB_PLANS_COLLECTION):
+def get_mongodb_collection(collection_name: str = MONGODB_PLANS_COLLECTION) -> AsyncIOMotorCollection:
     global DB_CONNECTION
     DB_CONNECTION = DB_CONNECTION or AsyncIOMotorClient(MONGODB_URL)
     db = getattr(DB_CONNECTION, MONGODB_DATABASE)
@@ -23,14 +24,14 @@ def get_mongodb_collection(collection_name=MONGODB_PLANS_COLLECTION):
     return collection
 
 
-async def init_plans_collection():
+async def init_plans_collection() -> None:
     global DB_CONNECTION
     DB_CONNECTION = DB_CONNECTION or AsyncIOMotorClient(MONGODB_URL)
     db = getattr(DB_CONNECTION, MONGODB_DATABASE)
     db.plans.update_one({"_id": "init"}, {"$set": {"_id": "init"}}, upsert=True)
 
 
-async def init_database():
+async def init_database() -> None:
     working_days = {}
     streams = 300
     collection = get_mongodb_collection(MONGODB_CONFIG_COLLECTION)
@@ -50,13 +51,13 @@ async def init_database():
     )
 
 
-async def get_calendar():
+async def get_calendar() -> dict:
     collection = get_mongodb_collection(MONGODB_CONFIG_COLLECTION)
     calendar = await collection.find_one({"_id": "config"})
     return calendar["working_days"]
 
 
-async def set_holiday(day):
+async def set_holiday(day: str) -> None:
     collection = get_mongodb_collection(MONGODB_CONFIG_COLLECTION)
     key = parse_date(day).date().isoformat()
     await collection.update_one(
@@ -64,7 +65,7 @@ async def set_holiday(day):
     )
 
 
-async def delete_holiday(day):
+async def delete_holiday(day: str) -> None:
     collection = get_mongodb_collection(MONGODB_CONFIG_COLLECTION)
     key = parse_date(day).date().isoformat()
     await collection.update_one(
@@ -72,7 +73,7 @@ async def delete_holiday(day):
     )
 
 
-async def get_streams():
+async def get_streams() -> int:
     collection = get_mongodb_collection(MONGODB_CONFIG_COLLECTION)
     config = await collection.find_one({"_id": "config"}, {"streams": 1})
     if not config or not config.get("streams", None):
@@ -80,7 +81,7 @@ async def get_streams():
     return config["streams"]
 
 
-async def get_date(mode, date):
+async def get_date(mode: str, date: datetime) -> Tuple[time, int, dict]:
     plan_id = f"plan{mode}_{date.isoformat()}"
     collection = get_mongodb_collection(MONGODB_PLANS_COLLECTION)
     plan = await collection.find_one({"_id": plan_id})
@@ -92,7 +93,14 @@ async def get_date(mode, date):
     return plan_date.time(), plan.get("streams_count", 1), plan
 
 
-async def set_date(plan_id, end_time, stream_id, tender_id, lot_id, start_time, new_slot=True):
+async def set_date(
+        plan_id: str,
+        end_time: time,
+        stream_id: int,
+        tender_id: str,
+        lot_id: str,
+        start_time: time,
+        new_slot: bool = True) -> None:
     collection = get_mongodb_collection(MONGODB_PLANS_COLLECTION)
 
     if new_slot:
@@ -134,7 +142,7 @@ async def set_date(plan_id, end_time, stream_id, tender_id, lot_id, start_time, 
         )
 
 
-def find_free_slot(plan: dict):
+def find_free_slot(plan: dict) -> Tuple[datetime, int]:
     streams_count = plan.get("streams_count", 0)
     for stream_id in range(streams_count):
         streams = plan.get("streams", [])
@@ -154,7 +162,7 @@ def find_free_slot(plan: dict):
                 return plan_date, current_stream
 
 
-def check_slot_to_be_free(lot_id, auction_time, lots, plan_time):
+def check_slot_to_be_free(lot_id: str, auction_time: datetime, lots: dict, plan_time: datetime) -> bool:
     if not lot_id and (
         not auction_time
         or not plan_time < auction_time < plan_time + timedelta(minutes=30)
@@ -169,7 +177,7 @@ def check_slot_to_be_free(lot_id, auction_time, lots, plan_time):
     return False
 
 
-async def free_slots(tender_id, auction_time, lots):
+async def free_slots(tender_id: str, auction_time: datetime, lots: dict) -> None:
     collection = get_mongodb_collection(MONGODB_PLANS_COLLECTION)
 
     async for doc in collection.aggregate(

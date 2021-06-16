@@ -14,15 +14,15 @@ from prozorro_chronograph.settings import (
 )
 
 
-def get_now():
+def get_now() -> datetime:
     return datetime.now(TZ)
 
 
-def randomize(dt):
+def randomize(dt: datetime) -> datetime:
     return dt + timedelta(seconds=randint(0, 1799))
 
 
-def calc_auction_end_time(bids, start):
+def calc_auction_end_time(bids: int, start: datetime) -> datetime:
     end = start + bids * BIDDER_TIME + SERVICE_TIME + MIN_PAUSE
     seconds = (end - TZ.localize(datetime.combine(end, WORKING_DAY_START))).seconds
     roundTo = ROUNDING.seconds
@@ -30,7 +30,7 @@ def calc_auction_end_time(bids, start):
     return (end + timedelta(0, rounding - seconds, -end.microsecond)).astimezone(TZ)
 
 
-def skipped_days(days):
+def skipped_days(days: int) -> str:
     days_str = ""
     if days:
         days_str = f" Skipped {days} full days."

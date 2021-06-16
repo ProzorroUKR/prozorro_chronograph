@@ -1,12 +1,12 @@
 # TODO: request_id_middleware (либа квинты) заменить либо адаптировать, чтобы у запросов были X-Request-ID (X-Client-Request-ID)
 # TODO: add_logging_context and context_unpack или изменить подход
-# TODO: Добавить аннотации
 
 import json
 import asyncio
 from aiohttp import ClientSession
 from random import randint
 from datetime import datetime, timedelta
+from typing import Tuple
 from prozorro_crawler.storage import get_feed_position
 
 from prozorro_chronograph.storage import (
@@ -42,7 +42,7 @@ from prozorro_chronograph.utils import (
 SESSION = ClientSession()
 
 
-async def push(url, params, server_id=None):
+async def push(url: str, server_id: str = None) -> None:
     # TODO Сделать вызов нужной функции без запроса
 
     tx = ty = 1
@@ -53,7 +53,7 @@ async def push(url, params, server_id=None):
 
         SESSION.cookie_jar.update_cookies({"SERVER_ID": server_id})
         await SESSION.options(url)
-        response = await SESSION.get(url, params=params)
+        response = await SESSION.get(url)
         if response.status == 200:
             break
         server_id = None
@@ -62,7 +62,11 @@ async def push(url, params, server_id=None):
         tx, ty = ty, tx + ty
 
 
-async def planning_auction(tender, start, quick=False, lot_id=None):
+async def planning_auction(
+        tender: dict,
+        start: datetime,
+        quick: bool = False,
+        lot_id: str = None) -> Tuple[datetime, int, int]:
     tender_id = tender.get("id", "")
     mode = tender.get("mode", "")
     calendar = await get_calendar()
@@ -124,7 +128,7 @@ async def planning_auction(tender, start, quick=False, lot_id=None):
     return start, stream, skipped_days
 
 
-async def check_auction(tender):
+async def check_auction(tender: dict) -> None:
     auction_time = tender.get("auctionPeriod", {}).get("startDate") and parse_date(
         tender.get("auctionPeriod", {}).get("startDate")
     )
@@ -141,7 +145,7 @@ async def check_auction(tender):
     await free_slots(tender["id"], auction_time, lots)
 
 
-async def check_tender(tender) -> dict:
+async def check_tender(tender: dict) -> dict:
     now = get_now()
     quick = SANDBOX_MODE and "quick" in tender.get("submissionMethodDetails", "")
     if (
@@ -228,7 +232,7 @@ async def check_tender(tender) -> dict:
     return {}
 
 
-async def process_listing(server_id_cookie, tender):
+async def process_listing(server_id_cookie: str, tender: dict) -> None:
     run_date = get_now()
     # TODO: Добавить условие когда нужно проверять аукцион, а когда нет
     await check_auction(tender)
@@ -242,7 +246,7 @@ async def process_listing(server_id_cookie, tender):
             name=f"Recheck {tid}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
-            args=[CHRONOGRAPH_HOST + "/recheck/" + tid, None, server_id_cookie],
+            args=[CHRONOGRAPH_HOST + "/recheck/" + tid, server_id_cookie],
         )
         next_check = parse_date(next_check, TZ).astimezone(TZ)
         recheck_job = scheduler.get_job(f"recheck_{tid}")
@@ -281,13 +285,13 @@ async def process_listing(server_id_cookie, tender):
                 id=f"resync_{tid}",
                 name=f"Resync {tid}",
                 misfire_grace_time=60 * 60,
-                args=[CHRONOGRAPH_HOST + "/resync/" + tid, None, server_id_cookie],
+                args=[CHRONOGRAPH_HOST + "/resync/" + tid, server_id_cookie],
                 replace_existing=True,
             )
     await asyncio.sleep(1)
 
 
-async def recheck_tender(tender_id):
+async def recheck_tender(tender_id: str) -> datetime:
     url = f"{BASE_URL}/{tender_id}"
     next_check = None
     recheck_url = CHRONOGRAPH_HOST + "/recheck/" + tender_id
@@ -328,7 +332,7 @@ async def recheck_tender(tender_id):
             name=f"Recheck {tender_id}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
-            args=[recheck_url, None],
+            args=[recheck_url],
         )
         if next_check < get_now():
             scheduler.add_job(
@@ -347,7 +351,7 @@ async def recheck_tender(tender_id):
     return next_check and next_check.isoformat()
 
 
-async def resync_tender(tender_id):
+async def resync_tender(tender_id: str) -> datetime:
     url = f"{BASE_URL}/{tender_id}"
     recheck_url = CHRONOGRAPH_HOST + "/recheck/" + tender_id
     resync_url = CHRONOGRAPH_HOST + "/resync/" + tender_id
@@ -427,7 +431,7 @@ async def resync_tender(tender_id):
             name=f"Recheck {tender_id}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
-            args=[recheck_url, None],
+            args=[recheck_url],
         )
         if next_check < get_now():
             scheduler.add_job(
@@ -453,6 +457,6 @@ async def resync_tender(tender_id):
             name=f"Resync {tender_id}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
-            args=[resync_url, None],
+            args=[resync_url],
         )
     return next_sync and next_sync.isoformat()

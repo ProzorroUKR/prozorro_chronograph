@@ -1,16 +1,16 @@
 import asyncio
-from aiohttp import web
+from aiohttp import web, ClientSession
 from prozorro_crawler.main import main
 
-from prozorro_chronograph.settings import scheduler
+from prozorro_chronograph.settings import scheduler, PUBLIC_API_HOST
 from prozorro_chronograph.api import create_app
 from prozorro_chronograph.scheduler import process_listing
 from prozorro_chronograph.storage import init_database
 
 
-async def data_handler(session, items):
+async def data_handler(session: ClientSession, items: list) -> None:
     server_id_cookie = getattr(
-        session.cookie_jar.filter_cookies().get("SERVER_ID"), "value", None
+        session.cookie_jar.filter_cookies(PUBLIC_API_HOST).get("SERVER_ID"), "value", None
     )
     process_items_tasks = (process_listing(server_id_cookie, item) for item in items)
     await asyncio.gather(*process_items_tasks)
