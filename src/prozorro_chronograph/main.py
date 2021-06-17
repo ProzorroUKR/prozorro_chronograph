@@ -12,7 +12,12 @@ async def data_handler(session: ClientSession, items: list) -> None:
     server_id_cookie = getattr(
         session.cookie_jar.filter_cookies(PUBLIC_API_HOST).get("SERVER_ID"), "value", None
     )
-    process_items_tasks = (process_listing(server_id_cookie, item) for item in items)
+    invalid_statuses = ("unsuccessful", "complete", "cancelled")
+    process_items_tasks = []
+    for item in items:
+        if item.get("status", None) not in invalid_statuses:
+            coroutine = process_listing(server_id_cookie, item)
+            process_items_tasks.append(coroutine)
     await asyncio.gather(*process_items_tasks)
 
 

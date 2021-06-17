@@ -37,7 +37,6 @@ class TestClass(BaseTenderTest):
         async with ClientSession(cookies=self.cookies) as session:
             with patch("prozorro_chronograph.scheduler.SESSION", session):
                 await recheck_tender(tender_id)
-            await session.options(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
             resp = await session.get(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
             data = await resp.json()
 
@@ -245,7 +244,7 @@ class TestClass(BaseTenderTest):
             },
             "tenderPeriod": {
                 "startDate": now.isoformat(),
-                "endDate": (now + timedelta(days=5)).isoformat()
+                "endDate": (now + timedelta(days=6)).isoformat()
             }
         }
         await self.config_tender(tender_id, update_data)

@@ -20,7 +20,6 @@ from prozorro_chronograph.storage import (
 from prozorro_chronograph.settings import (
     TZ,
     BASE_URL,
-    CHRONOGRAPH_HOST,
     API_TOKEN,
     SANDBOX_MODE,
     WORKING_DAY_START,
@@ -42,22 +41,23 @@ from prozorro_chronograph.utils import (
 SESSION = ClientSession()
 
 
-async def push(url: str, server_id: str = None) -> None:
-    # TODO Сделать вызов нужной функции без запроса
-
+async def push(mode: str, tender_id: str, server_id: str = None) -> None:
     tx = ty = 1
     while True:
-        if server_id is None and not url.startswith(CHRONOGRAPH_HOST):
+        if server_id is None:
             feed_position = await get_feed_position()
-            server_id = feed_position.get("server_id")
-
+            server_id = feed_position.get("server_id") if feed_position else None
         SESSION.cookie_jar.update_cookies({"SERVER_ID": server_id})
-        await SESSION.options(url)
-        response = await SESSION.get(url)
-        if response.status == 200:
-            break
-        server_id = None
-
+        try:
+            if mode == "recheck":
+                data = await recheck_tender(tender_id)
+            elif mode == "resync":
+                data = await resync_tender(tender_id)
+        except Exception as e:
+            LOGGER.error(f"Error on {mode} tender {tender_id}: {repr(e)}")
+        else:
+            if data != "repeat":
+                break
         await asyncio.sleep(tx)
         tx, ty = ty, tx + ty
 
@@ -74,7 +74,7 @@ async def planning_auction(
     skipped_days = 0
     if quick:
         quick_start = calc_auction_end_time(0, start)
-        return (quick_start, 0, skipped_days)
+        return quick_start, 0, skipped_days
     start += timedelta(hours=1)
     if start.time() < WORKING_DAY_START:
         nextDate = start.date()
@@ -146,6 +146,10 @@ async def check_auction(tender: dict) -> None:
 
 
 async def check_tender(tender: dict) -> dict:
+    invalid_statuses = ("unsuccessful", "complete", "cancelled")
+    if tender.get("status", None) in invalid_statuses:
+        return {}
+
     now = get_now()
     quick = SANDBOX_MODE and "quick" in tender.get("submissionMethodDetails", "")
     if (
@@ -246,7 +250,7 @@ async def process_listing(server_id_cookie: str, tender: dict) -> None:
             name=f"Recheck {tid}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
-            args=[CHRONOGRAPH_HOST + "/recheck/" + tid, server_id_cookie],
+            args=["recheck", tid, server_id_cookie],
         )
         next_check = parse_date(next_check, TZ).astimezone(TZ)
         recheck_job = scheduler.get_job(f"recheck_{tid}")
@@ -285,7 +289,7 @@ async def process_listing(server_id_cookie: str, tender: dict) -> None:
                 id=f"resync_{tid}",
                 name=f"Resync {tid}",
                 misfire_grace_time=60 * 60,
-                args=[CHRONOGRAPH_HOST + "/resync/" + tid, server_id_cookie],
+                args=["resync", tid, server_id_cookie],
                 replace_existing=True,
             )
     await asyncio.sleep(1)
@@ -294,8 +298,6 @@ async def process_listing(server_id_cookie: str, tender: dict) -> None:
 async def recheck_tender(tender_id: str) -> datetime:
     url = f"{BASE_URL}/{tender_id}"
     next_check = None
-    recheck_url = CHRONOGRAPH_HOST + "/recheck/" + tender_id
-    await SESSION.options(url)
     response = await SESSION.patch(
         url,
         json={"data": {"id": tender_id}},
@@ -307,10 +309,8 @@ async def recheck_tender(tender_id: str) -> datetime:
     data = await response.text()
 
     if response.status == 429:
-        # TODO: Исправить, ситуацию, когда при рестарте apscheduler запускает все джобы сразу
-        #  и сервер отвечает too many requests
         LOGGER.error(
-            "Error too mant requests {} on getting tender '{}': {}".format(
+            "Error too many requests {} on getting tender '{}': {}".format(
                 response.status, url, data
             ),
         )
@@ -332,7 +332,7 @@ async def recheck_tender(tender_id: str) -> datetime:
             name=f"Recheck {tender_id}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
-            args=[recheck_url],
+            args=["recheck", tender_id],
         )
         if next_check < get_now():
             scheduler.add_job(
@@ -353,12 +353,9 @@ async def recheck_tender(tender_id: str) -> datetime:
 
 async def resync_tender(tender_id: str) -> datetime:
     url = f"{BASE_URL}/{tender_id}"
-    recheck_url = CHRONOGRAPH_HOST + "/recheck/" + tender_id
-    resync_url = CHRONOGRAPH_HOST + "/resync/" + tender_id
     next_check = None
     next_sync = None
 
-    await SESSION.options(url)
     response = await SESSION.get(
         url,
         headers={
@@ -369,10 +366,8 @@ async def resync_tender(tender_id: str) -> datetime:
     data = await response.text()
 
     if response.status == 429:
-        # TODO: Исправить, ситуацию, когда при рестарте apscheduler запускает все джобы сразу
-        #  и сервер отвечает too many requests
         LOGGER.error(
-            "Error too mant requests {} on getting tender '{}': {}".format(
+            "Error too many requests {} on getting tender '{}': {}".format(
                 response.status, url, data
             ),
         )
@@ -382,6 +377,8 @@ async def resync_tender(tender_id: str) -> datetime:
         )
         if response.status in (404, 410):
             return
+        elif response.status == 412:
+            return "repeat"
         next_sync = get_now() + timedelta(
             seconds=randint(SMOOTHING_REMIN, SMOOTHING_MAX)
         )
@@ -390,7 +387,6 @@ async def resync_tender(tender_id: str) -> datetime:
         tender = data["data"]
         changes = await check_tender(tender)
         if changes:
-            await SESSION.options(url)
             response = await SESSION.patch(
                 url,
                 json={"data": changes},
@@ -402,10 +398,8 @@ async def resync_tender(tender_id: str) -> datetime:
             data = await response.text()
 
             if response.status == 429:
-                # TODO: Исправить, ситуацию, когда при рестарте apscheduler запускает все джобы сразу
-                #  и сервер отвечает too many requests
                 LOGGER.error(
-                    "Error too mant requests {} on getting tender '{}': {}".format(
+                    "Error too many requests {} on getting tender '{}': {}".format(
                         response.status, url, data
                     ),
                 )
@@ -431,7 +425,7 @@ async def resync_tender(tender_id: str) -> datetime:
             name=f"Recheck {tender_id}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
-            args=[recheck_url],
+            args=["recheck", tender_id],
         )
         if next_check < get_now():
             scheduler.add_job(
@@ -457,6 +451,6 @@ async def resync_tender(tender_id: str) -> datetime:
             name=f"Resync {tender_id}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
-            args=[resync_url],
+            args=["resync", tender_id],
         )
     return next_sync and next_sync.isoformat()

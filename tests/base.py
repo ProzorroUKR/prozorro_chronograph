@@ -167,7 +167,6 @@ class BaseTenderTest(BaseTest):
     async def config_tender(self, tender_id, update_data):
         cookies = await self.get_cookies()
         async with ClientSession(cookies=cookies) as session:
-            await session.options(f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}")
             resp = await session.patch(
                 f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}",
                 data=json.dumps({"data": update_data}),
