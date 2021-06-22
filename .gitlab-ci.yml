@@ -9,9 +9,10 @@ test:
   script:
     - echo '127.0.0.1 couchdb' >> /etc/hosts
     - pip install pytest
-    - pip install git+https://github.com/ProzorroUKR/openprocurement.api.git
+    - git clone git+https://github.com/ProzorroUKR/openprocurement.api.git
     - pip install -e .
-    - pytest
+    - cp etc/*.ini openprocurement.api/etc/
+    - pytest tests/
 
 docker build:
   image: docker:git

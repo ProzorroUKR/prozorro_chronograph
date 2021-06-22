@@ -222,10 +222,10 @@ class TestClass(BaseTenderTest):
         assert data["data"]["status"] == "active.tendering"
         if data["data"].get("lots", None) is not None:
             assert "auctionPeriod" in data["data"]["lots"][0]
-            assert parse_date(data["data"]["lots"][0]["auctionPeriod"]["startDate"], TZ).weekday() == 1
+            assert parse_date(data["data"]["lots"][0]["auctionPeriod"]["startDate"], TZ).weekday() == 0
         else:
             assert "auctionPeriod" in data["data"]
-            assert parse_date(data["data"]["auctionPeriod"]["startDate"], TZ).weekday() == 1
+            assert parse_date(data["data"]["auctionPeriod"]["startDate"], TZ).weekday() == 0
 
     async def test_set_auctionPeriod_skip_holidays(self, tender_id, db, scheduler):
         now = datetime.now(TZ)
@@ -310,10 +310,10 @@ class TestClass(BaseTenderTest):
         assert data["data"]["status"] == "active.tendering"
         if data["data"].get("lots", None) is not None:
             assert "auctionPeriod" in data["data"]["lots"][0]
-            assert parse_date(data["data"]["lots"][0]["auctionPeriod"]["startDate"], TZ).weekday() == 1
+            assert parse_date(data["data"]["lots"][0]["auctionPeriod"]["startDate"], TZ).weekday() == 0
         else:
             assert "auctionPeriod" in data["data"]
-            assert parse_date(data["data"]["auctionPeriod"]["startDate"], TZ).weekday() == 1
+            assert parse_date(data["data"]["auctionPeriod"]["startDate"], TZ).weekday() == 0
 
     async def test_switch_to_unsuccessful(self, tender_id, db, scheduler):
         now = datetime.now(TZ)
