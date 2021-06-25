@@ -1,9 +1,12 @@
 stages:
   - test
-  - push image
+  - build
 
 test:
   image: python:3.8
+  only:
+    - branches
+  when: manual
   services:
     - couchdb:1.6
   script:
@@ -17,6 +20,8 @@ test:
 docker build:
   image: docker:git
   stage: push image
+  only:
+    - branches
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 #   - LATEST_MASTER_COMMIT=$(git log -n 1 origin/master --pretty=format:"%H")
