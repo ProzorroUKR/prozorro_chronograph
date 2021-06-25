@@ -19,7 +19,7 @@ test:
 
 docker build:
   image: docker:git
-  stage: push image
+  stage: build
   only:
     - branches
   script:
