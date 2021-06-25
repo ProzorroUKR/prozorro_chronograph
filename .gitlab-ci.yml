@@ -12,7 +12,7 @@ test:
   script:
     - echo '127.0.0.1 couchdb' >> /etc/hosts
     - pip install pytest
-    - git clone git+https://github.com/ProzorroUKR/openprocurement.api.git
+    - git clone https://github.com/ProzorroUKR/openprocurement.api.git
     - pip install -e .
     - cp etc/*.ini openprocurement.api/etc/
 #    - pytest tests/
@@ -22,6 +22,7 @@ docker build:
   stage: build
   only:
     - branches
+  when: manual
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 #   - LATEST_MASTER_COMMIT=$(git log -n 1 origin/master --pretty=format:"%H")
