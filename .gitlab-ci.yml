@@ -12,10 +12,12 @@ test:
   script:
     - echo '127.0.0.1 couchdb' >> /etc/hosts
     - pip install pytest
-    - git clone https://github.com/ProzorroUKR/openprocurement.api.git
+    - git clone https://github.com/ProzorroUKR/openprocurement.api.git src/opcr
     - pip install -e .
-    - cp etc/*.ini openprocurement.api/etc/
-#    - pytest tests/
+    - cp etc/*.ini src/opcr/etc/
+    - docker compose up api -d
+    - sleep 20
+    - pytest tests/
 
 docker build:
   image: docker:git
