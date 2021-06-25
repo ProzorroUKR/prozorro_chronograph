@@ -12,13 +12,11 @@ test:
     - git clone git+https://github.com/ProzorroUKR/openprocurement.api.git
     - pip install -e .
     - cp etc/*.ini openprocurement.api/etc/
-    - pytest tests/
+#    - pytest tests/
 
 docker build:
   image: docker:git
   stage: push image
-  only:
-    - tags
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 #   - LATEST_MASTER_COMMIT=$(git log -n 1 origin/master --pretty=format:"%H")
