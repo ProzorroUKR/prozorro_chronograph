@@ -59,13 +59,13 @@ review:
     - helm repo add prozorro $REPO_URL
     - helm repo update
     - helm --debug upgrade $CI_COMMIT_REF_SLUG --install prozorro/prozorro --namespace dev-prozorro
-          --set prozorro-api.image.tag=$API_TAG --set deployAuctions=false --set deployAuction=true
+          --set prozorro-api.image.tag=$API_TAG
+          --set deployAuctions=false
+          --set deployAuction=true
           --set prozorro-auction.api.image.tag=$TAG
           --set prozorro-auction.chronograph.image.tag=$TAG
           --set prozorro-auction.databridge.image.tag=$TAG
           --set prozorro-auction.frontend.image.tag=$FRONT_TAG
-          --set prozoroo-bridges.bridges.chronograph.image.repository=docker-registry.prozorro.gov.ua/cdb/prozorro-chronograph
-          --set prozoroo-bridges.bridges.chronograph.container.command=
           --wait
   only:
     - branches
