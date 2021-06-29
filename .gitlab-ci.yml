@@ -54,6 +54,7 @@ review:
   variables:
     API_TAG: "2.6.20"
     FRONT_TAG: "0.2.11"
+    TAG: $CI_COMMIT_REF_SLUG
   script:
     - helm repo add prozorro $REPO_URL
     - helm repo update
