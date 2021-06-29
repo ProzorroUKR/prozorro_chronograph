@@ -22,6 +22,8 @@ test:
 docker build:
   image: docker:git
   stage: build
+  tags:
+    - shell
   only:
     - branches
   script:
