@@ -22,7 +22,7 @@ test:
     - sleep 20
     - pytest tests/
 
-docker build:
+build:
   image: docker:git
   stage: build
   tags:
@@ -34,3 +34,4 @@ docker build:
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   only:
     - branches
+    - tags
