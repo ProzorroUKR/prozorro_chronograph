@@ -37,6 +37,8 @@ build:
   only:
     - branches
     - tags
+  except:
+    - master
 
 
 review:
@@ -64,6 +66,8 @@ review:
           --wait
   only:
     - branches
+  except:
+    - master
   when: manual
 
 
