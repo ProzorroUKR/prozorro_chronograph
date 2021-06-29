@@ -62,7 +62,6 @@ review:
           --set deployAuctions=false
           --set deployAuction=true
           --set prozorro-auction.frontend.image.tag=$FRONT_TAG
-#          --set prozoroo-bridges.bridges.chronograph.image.repository=docker-registry.prozorro.gov.ua/cdb/prozorro-chronograph
           --wait
   only:
     - branches
