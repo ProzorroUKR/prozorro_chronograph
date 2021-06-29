@@ -2,6 +2,9 @@ stages:
   - test
   - build
 
+variables:
+  CI_TAG: ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
+
 test:
   image: python:3.8
   only:
@@ -22,8 +25,6 @@ test:
 docker build:
   image: docker:git
   stage: build
-  tags:
-    - shell
   only:
     - branches
   script:
