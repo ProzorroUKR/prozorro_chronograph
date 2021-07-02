@@ -82,11 +82,13 @@ review_chronograph:
     url: http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}/api/2.5/tenders
     on_stop: stop_chronograph_review
     auto_stop_in: 1 day
+  variables:
+    API_HOST: http://api.$CI_COMMIT_REF_SLUG.$K8S_DOMAIN
   script:
     - helm repo add prozorro $REPO_URL
     - helm repo update
     - helm --debug upgrade ${CI_COMMIT_REF_SLUG}-chronograph --install prozorro/prozorro-chronograph --namespace dev-prozorro
-      --set chronograph.container.environment.PUBLIC_API_HOST=http://api.$CI_COMMIT_REF_SLUG.$K8S_DOMAIN
+      --set chronograph.container.environment.PUBLIC_API_HOST=$API_HOST
       --wait
   only:
   - branches
