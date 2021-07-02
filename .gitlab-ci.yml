@@ -41,7 +41,7 @@ build:
     - master
 
 
-review:
+review_without_chronograph:
   stage: deploy
   dependencies:
     - build
