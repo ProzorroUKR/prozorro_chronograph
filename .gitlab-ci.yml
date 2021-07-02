@@ -74,7 +74,6 @@ review_chronograph:
   stage: deploy
   dependencies:
     - build
-    - review_without_chronograph
   tags:
     - shell
   environment:
