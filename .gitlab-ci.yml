@@ -70,6 +70,27 @@ review_without_chronograph:
   when: manual
 
 
+review_chronograph:
+  stage: deploy
+  dependencies:
+    - build
+    - review_without_chronograph
+  tags:
+    - shell
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}-chronograph
+    action: start
+    url: http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}/api/2.5/tenders
+    on_stop: stop_review
+    auto_stop_in: 1 day
+  script:
+    - helm repo add prozorro $REPO_URL
+    - helm repo update
+    - helm --debug upgrade $CI_COMMIT_REF_SLUG-chronograph --install prozorro/prozorro-chronograph --namespace dev-prozorro
+      --set chronograph.container.environment.PUBLIC_API_HOST=http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}
+      --wait
+
+
 stop_review:
   stage: deploy
   script:
