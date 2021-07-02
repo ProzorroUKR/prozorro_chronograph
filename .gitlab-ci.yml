@@ -37,8 +37,6 @@ build:
   only:
     - branches
     - tags
-  except:
-    - master
 
 
 review_without_chronograph:
@@ -83,4 +81,6 @@ stop_review:
     - shell
   only:
     - branches
+  except:
+    - master
   when: manual
