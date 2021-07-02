@@ -88,6 +88,11 @@ review_chronograph:
     - helm --debug upgrade ${CI_COMMIT_REF_SLUG}-chronograph --install prozorro/prozorro-chronograph --namespace dev-prozorro
       --set chronograph.container.environment.PUBLIC_API_HOST=http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}
       --wait
+  only:
+    - branches
+    except:
+      - master
+  when: manual
 
 
 stop_review:
