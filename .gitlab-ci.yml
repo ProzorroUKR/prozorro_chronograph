@@ -77,7 +77,7 @@ review_chronograph:
   tags:
     - shell
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}-chronograph
+    name: review/${CI_COMMIT_REF_SLUG}
     action: start
     url: http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}/api/2.5/tenders
     on_stop: stop_chronograph_review
@@ -85,8 +85,8 @@ review_chronograph:
   script:
     - helm repo add prozorro $REPO_URL
     - helm repo update
-    - helm --debug upgrade ${CI_COMMIT_REF_SLUG}-chronograph --install prozorro/prozorro-chronograph --namespace dev-prozorro
-      --set chronograph.container.environment.PUBLIC_API_HOST=http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}
+    - helm --debug upgrade ${CI_COMMIT_REF_SLUG} --install prozorro/prozorro-chronograph --namespace dev-prozorro
+      --set chronograph.container.environment.PUBLIC_API_HOST=http://api.$CI_COMMIT_REF_SLUG.$K8S_DOMAIN
       --wait
   only:
   - branches
@@ -114,9 +114,9 @@ stop_review:
 stop_chronograph_review:
   stage: deploy
   script:
-    - helm delete ${CI_COMMIT_REF_SLUG}-chronograph --purge
+    - helm delete ${CI_COMMIT_REF_SLUG} --purge
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}-chronograph
+    name: review/${CI_COMMIT_REF_SLUG}
     action: stop
   tags:
     - shell
