@@ -89,9 +89,9 @@ review_chronograph:
       --set chronograph.container.environment.PUBLIC_API_HOST=http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}
       --wait
   only:
-    - branches
-    except:
-      - master
+  - branches
+  except:
+    - master
   when: manual
 
 
