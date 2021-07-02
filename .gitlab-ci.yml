@@ -64,7 +64,6 @@ review:
           --set deployAuctions=false
           --set deployAuction=true
           --set prozorro-bridges.bridges.chronograph.deploy=false
-          --set deployChronograph=true
           --wait
   only:
     - branches
