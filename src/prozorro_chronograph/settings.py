@@ -30,6 +30,7 @@ SERVICE_TIME = timedelta(minutes=9)
 SMOOTHING_MIN = 10
 SMOOTHING_REMIN = 60
 SMOOTHING_MAX = 300
+INVALID_STATUSES = ("unsuccessful", "complete", "cancelled")
 
 LOGGER = logger
 
