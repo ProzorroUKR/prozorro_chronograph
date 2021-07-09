@@ -1,6 +1,3 @@
-# TODO: request_id_middleware (либа квинты) заменить либо адаптировать, чтобы у запросов были X-Request-ID (X-Client-Request-ID)
-# TODO: add_logging_context and context_unpack или изменить подход
-
 import json
 import asyncio
 from aiohttp import ClientSession
@@ -29,6 +26,7 @@ from prozorro_chronograph.settings import (
     SMOOTHING_MIN,
     SMOOTHING_MAX,
     SMOOTHING_REMIN,
+    INVALID_STATUSES,
 )
 from prozorro_chronograph.utils import (
     get_now,
@@ -140,14 +138,11 @@ async def check_auction(tender: dict) -> None:
         ]
     )
 
-    # TODO: remove it
-    # (1f03319183514180ab7f7361ec908fe1: key=lot_id, 2022-01-03T11:30:00: datetime, plantest_2021-04-23: plan_id)
     await free_slots(tender["id"], auction_time, lots)
 
 
 async def check_tender(tender: dict) -> dict:
-    invalid_statuses = ("unsuccessful", "complete", "cancelled")
-    if tender.get("status", None) in invalid_statuses:
+    if tender.get("status", None) in INVALID_STATUSES:
         return {}
 
     now = get_now()
@@ -238,7 +233,6 @@ async def check_tender(tender: dict) -> dict:
 
 async def process_listing(server_id_cookie: str, tender: dict) -> None:
     run_date = get_now()
-    # TODO: Добавить условие когда нужно проверять аукцион, а когда нет
     await check_auction(tender)
     tid = tender.get("id")
     next_check = tender.get("next_check")
@@ -314,11 +308,29 @@ async def recheck_tender(tender_id: str) -> datetime:
                 response.status, url, data
             ),
         )
+        next_check = get_now() + timedelta(minutes=1)
     elif response.status != 200:
         LOGGER.error(
             "Error {} on checking tender '{}': {}".format(response.status, url, data)
         )
-        if response.status not in (403, 404, 410):
+        if response.status == 422:
+            next_check = get_now() + timedelta(minutes=1)
+            response = await SESSION.get(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {API_TOKEN}",
+                },
+            )
+            data = await response.text()
+            if response.status == 200:
+                data = json.loads(data)
+                if data["data"]["status"] in INVALID_STATUSES:
+                    status = data.get("status", None)
+                    tender_id = data.get("id", None)
+                    LOGGER.info(f"Next check won't be set for tender {tender_id} with status {status}")
+                    next_check = None
+        elif response.status not in (403, 404, 410):
             next_check = get_now() + timedelta(minutes=1)
     elif response.status == 200:
         data = json.loads(data)
@@ -371,6 +383,9 @@ async def resync_tender(tender_id: str) -> datetime:
                 response.status, url, data
             ),
         )
+        next_sync = get_now() + timedelta(
+            seconds=randint(SMOOTHING_REMIN, SMOOTHING_MAX)
+        )
     elif response.status != 200:
         LOGGER.error(
             "Error {} on getting tender '{}': {}".format(response.status, url, data),
@@ -402,6 +417,9 @@ async def resync_tender(tender_id: str) -> datetime:
                     "Error too many requests {} on getting tender '{}': {}".format(
                         response.status, url, data
                     ),
+                )
+                next_sync = get_now() + timedelta(
+                    seconds=randint(SMOOTHING_REMIN, SMOOTHING_MAX)
                 )
             elif response.status != 200:
                 LOGGER.error(

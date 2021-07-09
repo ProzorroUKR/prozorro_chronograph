@@ -26,10 +26,10 @@ class TestClass(BaseTenderTest):
         update_data = {
             "enquiryPeriod": {
                 "startDate": (now + timedelta(days=-15)).isoformat(),
-                "endDate": (now + timedelta(days=-9)).isoformat()
+                "endDate": (now + timedelta(days=-8)).isoformat()
             },
             "tenderPeriod": {
-                "startDate": (now + timedelta(days=-9)).isoformat(),
+                "startDate": (now + timedelta(days=-8)).isoformat(),
                 "endDate": (now + timedelta(days=5)).isoformat(),
             }
         }
@@ -47,10 +47,10 @@ class TestClass(BaseTenderTest):
         update_tender = {
             "enquiryPeriod": {
                 "startDate": (now + timedelta(days=-15)).isoformat(),
-                "endDate": (now + timedelta(days=-9)).isoformat()
+                "endDate": (now + timedelta(days=-8)).isoformat()
             },
             "tenderPeriod": {
-                "startDate": (now + timedelta(days=-9)).isoformat(),
+                "startDate": (now + timedelta(days=-8)).isoformat(),
                 "endDate": now.isoformat()
             }
         }
@@ -94,10 +94,10 @@ class TestClass(BaseTenderTest):
         update_data = {
             "enquiryPeriod": {
                 "startDate": (now + timedelta(days=-15)).isoformat(),
-                "endDate": (now + timedelta(days=-9)).isoformat()
+                "endDate": (now + timedelta(days=-8)).isoformat()
             },
             "tenderPeriod": {
-                "startDate": (now + timedelta(days=-9)).isoformat(),
+                "startDate": (now + timedelta(days=-8)).isoformat(),
                 "endDate": (now + timedelta(days=1)).isoformat()
             }
         }
@@ -149,7 +149,7 @@ class TestClass(BaseTenderTest):
         update_data = {
             "enquiryPeriod": {
                 "startDate": (now + timedelta(days=-15)).isoformat(),
-                "endDate": (now + timedelta(days=-9)).isoformat()
+                "endDate": (now + timedelta(days=-8)).isoformat()
             },
             "tenderPeriod": {
                 "startDate": now.isoformat(),
@@ -197,7 +197,7 @@ class TestClass(BaseTenderTest):
         update_data = {
             "enquiryPeriod": {
                 "startDate": (now + timedelta(days=-15)).isoformat(),
-                "endDate": (now + timedelta(days=-9)).isoformat()
+                "endDate": (now + timedelta(days=-8)).isoformat()
             },
             "tenderPeriod": {
                 "startDate": now.isoformat(),
@@ -240,7 +240,7 @@ class TestClass(BaseTenderTest):
         update_data = {
             "enquiryPeriod": {
                 "startDate": (now + timedelta(days=-15)).isoformat(),
-                "endDate": (now + timedelta(days=-9)).isoformat()
+                "endDate": (now + timedelta(days=-8)).isoformat()
             },
             "tenderPeriod": {
                 "startDate": now.isoformat(),
@@ -283,7 +283,7 @@ class TestClass(BaseTenderTest):
         update_data = {
             "enquiryPeriod": {
                 "startDate": (now + timedelta(days=-15)).isoformat(),
-                "endDate": (now + timedelta(days=-9)).isoformat()
+                "endDate": (now + timedelta(days=-8)).isoformat()
             },
             "tenderPeriod": {
                 "startDate": now.isoformat(),
@@ -320,10 +320,10 @@ class TestClass(BaseTenderTest):
         update_data = {
             "enquiryPeriod": {
                 "startDate": (now + timedelta(days=-15)).isoformat(),
-                "endDate": (now + timedelta(days=-9)).isoformat()
+                "endDate": (now + timedelta(days=-8)).isoformat()
             },
             "tenderPeriod": {
-                "startDate": (now + timedelta(days=-9)).isoformat(),
+                "startDate": (now + timedelta(days=-8)).isoformat(),
                 "endDate": now.isoformat()
             }
         }

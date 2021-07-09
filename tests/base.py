@@ -121,10 +121,10 @@ class BaseTenderTest(BaseTest):
             update_data = {
                 "enquiryPeriod": {
                     "startDate": (get_now() + timedelta(days=-15)).isoformat(),
-                    "endDate": (get_now() + timedelta(days=-9)).isoformat()
+                    "endDate": (get_now() + timedelta(days=-8)).isoformat()
                 },
                 "tenderPeriod": {
-                    "startDate": (get_now() + timedelta(days=-9)).isoformat(),
+                    "startDate": (get_now() + timedelta(days=-8)).isoformat(),
                     "endDate": (get_now() + timedelta(seconds=1)).isoformat()
                 }
             }

@@ -12,10 +12,10 @@ test_tender_data_quick = deepcopy(test_tender_data)
 test_tender_data_quick.update({
     "enquiryPeriod": {
         "startDate": (datetime.now(TZ) + timedelta(days=-15)).isoformat(),
-        "endDate": (datetime.now(TZ) + timedelta(days=-9)).isoformat()
+        "endDate": (datetime.now(TZ) + timedelta(days=-8)).isoformat()
     },
     "tenderPeriod": {
-        "startDate": (datetime.now(TZ) + timedelta(days=-9)).isoformat(),
+        "startDate": (datetime.now(TZ) + timedelta(days=-8)).isoformat(),
         "endDate": datetime.now(TZ).isoformat()
     }
 })
