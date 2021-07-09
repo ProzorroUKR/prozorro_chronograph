@@ -383,6 +383,9 @@ async def resync_tender(tender_id: str) -> datetime:
                 response.status, url, data
             ),
         )
+        next_sync = get_now() + timedelta(
+            seconds=randint(SMOOTHING_REMIN, SMOOTHING_MAX)
+        )
     elif response.status != 200:
         LOGGER.error(
             "Error {} on getting tender '{}': {}".format(response.status, url, data),
@@ -414,6 +417,9 @@ async def resync_tender(tender_id: str) -> datetime:
                     "Error too many requests {} on getting tender '{}': {}".format(
                         response.status, url, data
                     ),
+                )
+                next_sync = get_now() + timedelta(
+                    seconds=randint(SMOOTHING_REMIN, SMOOTHING_MAX)
                 )
             elif response.status != 200:
                 LOGGER.error(
