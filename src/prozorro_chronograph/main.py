@@ -24,16 +24,16 @@ async def data_handler(session: ClientSession, items: list) -> None:
     await asyncio.gather(*process_items_tasks)
 
 
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
+async def run_services():
     app = create_app()
-
     app = web.AppRunner(app)
-    loop.run_until_complete(app.setup())
+    await app.setup()
     site = web.TCPSite(app)
 
-    loop.run_until_complete(init_database())
-    loop.run_until_complete(site.start())
+    await init_database()
+    await site.start()
     scheduler.start()
 
-    main(data_handler)
+
+if __name__ == "__main__":
+    main(data_handler, init_task=run_services)

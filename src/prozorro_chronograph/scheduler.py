@@ -326,8 +326,8 @@ async def recheck_tender(tender_id: str) -> datetime:
             if response.status == 200:
                 data = json.loads(data)
                 if data["data"]["status"] in INVALID_STATUSES:
-                    status = data.get("status", None)
-                    tender_id = data.get("id", None)
+                    status = data["data"]["status"]
+                    tender_id = data["data"]["id"]
                     LOGGER.info(f"Next check won't be set for tender {tender_id} with status {status}")
                     next_check = None
         elif response.status not in (403, 404, 410):

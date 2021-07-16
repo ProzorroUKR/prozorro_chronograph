@@ -17,8 +17,26 @@ services:
       - API_OPT_FIELDS=status,auctionPeriod,lots,next_check
       - PUBLIC_API_HOST=https://lb-api-sandbox-2.prozorro.gov.ua
       - MONGODB_URL=mongodb://root:example@mongo:27017
+      - LOCK_ENABLED=yep
+      - LOCK_PROCESS_NAME=prozorro-chronograph
     ports:
       - 8080:8080
+    depends_on:
+      - mongo
+    volumes:
+      - "./src:/app"
+
+  chronograph_2:
+    build: .
+    environment:
+      - PYTHONUNBUFFERED=1
+      - API_OPT_FIELDS=status,auctionPeriod,lots,next_check
+      - PUBLIC_API_HOST=https://lb-api-sandbox-2.prozorro.gov.ua
+      - MONGODB_URL=mongodb://root:example@mongo:27017
+      - LOCK_ENABLED=yep
+      - LOCK_PROCESS_NAME=prozorro-chronograph
+    ports:
+      - 8081:8080
     depends_on:
       - mongo
     volumes:
