@@ -17,6 +17,7 @@ from prozorro_chronograph.storage import (
 from prozorro_chronograph.settings import (
     TZ,
     BASE_URL,
+    URL_SUFFIX,
     API_TOKEN,
     SANDBOX_MODE,
     WORKING_DAY_START,
@@ -290,7 +291,7 @@ async def process_listing(server_id_cookie: str, tender: dict) -> None:
 
 
 async def recheck_tender(tender_id: str) -> datetime:
-    url = f"{BASE_URL}/{tender_id}"
+    url = f"{BASE_URL}/{tender_id}{URL_SUFFIX}"
     next_check = None
     response = await SESSION.patch(
         url,
@@ -364,7 +365,7 @@ async def recheck_tender(tender_id: str) -> datetime:
 
 
 async def resync_tender(tender_id: str) -> datetime:
-    url = f"{BASE_URL}/{tender_id}"
+    url = f"{BASE_URL}/{tender_id}{URL_SUFFIX}"
     next_check = None
     next_sync = None
 
