@@ -14,7 +14,7 @@ with open(os.path.join(os.path.dirname(__file__), 'requirements.txt'), 'r') as f
 
 setup(
     name='prozorro_chronograph',
-    version='1.0.2',
+    version='1.0.3',
     description='',
     packages=find_packages('src'),
     package_dir={"": "src"},
