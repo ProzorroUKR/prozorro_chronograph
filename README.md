@@ -16,6 +16,8 @@ pip install -r requirements.txt
 Clone and config openprocurement.api
 ```
 git clone git@github.com:ProzorroUKR/openprocurement.api.git src/opcr
+cd src/opcr git checkout tags/2.6.35
+cd -
 cp etc/*.ini src/opcr/etc/
 ```
 
