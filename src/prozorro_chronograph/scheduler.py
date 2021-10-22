@@ -5,6 +5,7 @@ from random import randint
 from datetime import datetime, timedelta
 from typing import Tuple
 from prozorro_crawler.storage import get_feed_position
+from prozorro_crawler.settings import CRAWLER_USER_AGENT
 
 from prozorro_chronograph.storage import (
     get_calendar,
@@ -299,6 +300,7 @@ async def recheck_tender(tender_id: str) -> datetime:
         headers={
             "Content-Type": "application/json",
             "Authorization": f"Bearer {API_TOKEN}",
+            "User-Agent": CRAWLER_USER_AGENT
         },
     )
     data = await response.text()
@@ -321,6 +323,7 @@ async def recheck_tender(tender_id: str) -> datetime:
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {API_TOKEN}",
+                    "User-Agent": CRAWLER_USER_AGENT
                 },
             )
             data = await response.text()
@@ -374,6 +377,7 @@ async def resync_tender(tender_id: str) -> datetime:
         headers={
             "Content-Type": "application/json",
             "Authorization": f"Bearer {API_TOKEN}",
+            "User-Agent": CRAWLER_USER_AGENT
         },
     )
     data = await response.text()
@@ -409,6 +413,7 @@ async def resync_tender(tender_id: str) -> datetime:
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {API_TOKEN}",
+                    "User-Agent": CRAWLER_USER_AGENT
                 },
             )
             data = await response.text()

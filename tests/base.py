@@ -17,6 +17,7 @@ from prozorro_chronograph.settings import scheduler
 from prozorro_chronograph.storage import init_database
 from prozorro_chronograph.utils import get_now
 from .api_data import test_tender_data
+from prozorro_crawler.settings import CRAWLER_USER_AGENT
 
 PUBLIC_API_HOST = os.environ["PUBLIC_API_HOST"]
 MONGODB_URL = os.environ["MONGODB_URL"]
@@ -67,7 +68,8 @@ class BaseTest:
 class BaseTenderTest(BaseTest):
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Basic {token}"
+        "Authorization": f"Basic {token}",
+        "User-Agent": CRAWLER_USER_AGENT
     }
     initial_lots = None
     initial_data = test_tender_data
@@ -132,6 +134,7 @@ class BaseTenderTest(BaseTest):
             headers = deepcopy(self.headers)
             token = base64.b64encode(b"chronograph:").decode("utf-8")
             headers["Authorization"] = f"Basic {token}"
+            headers["User-Agent"] = CRAWLER_USER_AGENT
             for _ in range(100):
                 response = await session.patch(
                     f"{PUBLIC_API_HOST}/api/2.5/tenders/{tender_id}",
