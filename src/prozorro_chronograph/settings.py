@@ -7,7 +7,6 @@ from apscheduler.executors.asyncio import AsyncIOExecutor
 from prozorro_crawler.settings import logger
 
 MONGODB_URL = os.environ.get("MONGODB_URL", "mongodb://root:example@localhost:27017")
-MONGODB_HOST = ":".join(MONGODB_URL.split(":")[:-1])
 MONGODB_DATABASE = os.environ.get("MONGODB_DATABASE", "prozorro-chronograph")
 MONGODB_PLANS_COLLECTION = os.environ.get("MONGODB_COLLECTION", "plans")
 MONGODB_CONFIG_COLLECTION = os.environ.get("MONGODB_CONFIG_COLLECTION", "config")
@@ -32,9 +31,10 @@ SMOOTHING_MIN = 10
 SMOOTHING_REMIN = 60
 SMOOTHING_MAX = 300
 INVALID_STATUSES = ("unsuccessful", "complete", "cancelled")
+STREAMS = 300
 
 LOGGER = logger
 
-jobstores = {"default": MongoDBJobStore(database=APSCHEDULER_DATABASE, host=MONGODB_HOST)}
+jobstores = {"default": MongoDBJobStore(database=APSCHEDULER_DATABASE, host=MONGODB_URL)}
 executors = {"default": AsyncIOExecutor()}
 scheduler = Scheduler(jobstores=jobstores, executors=executors, timezone=TZ)
