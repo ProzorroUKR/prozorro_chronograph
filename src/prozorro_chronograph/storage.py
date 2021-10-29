@@ -10,6 +10,7 @@ from prozorro_chronograph.settings import (
     MONGODB_URL,
     WORKING_DAY_START,
     TZ,
+    STREAMS,
 )
 from prozorro_chronograph.utils import parse_date
 
@@ -33,7 +34,7 @@ async def init_plans_collection() -> None:
 
 async def init_database() -> None:
     working_days = {}
-    streams = 300
+    streams = STREAMS
     collection = get_mongodb_collection(MONGODB_CONFIG_COLLECTION)
 
     holidays = standards.load("calendars/workdays_off.json")
