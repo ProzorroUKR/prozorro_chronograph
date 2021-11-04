@@ -132,13 +132,21 @@ async def check_auction(tender: dict) -> None:
     auction_time = tender.get("auctionPeriod", {}).get("startDate") and parse_date(
         tender.get("auctionPeriod", {}).get("startDate")
     )
-    lots = dict(
-        [
-            (i["id"], parse_date(i.get("auctionPeriod", {}).get("startDate")))
-            for i in tender.get("lots", [])
-            if i.get("auctionPeriod", {}).get("startDate")
-        ]
-    )
+    try:
+        lots = dict(
+            [
+                (i["id"], parse_date(i.get("auctionPeriod", {}).get("startDate")))
+                for i in tender.get("lots", [])
+                if i.get("auctionPeriod", {}).get("startDate")
+            ]
+        )
+    except Exception as e:
+        LOGGER.error(
+            "Error on checking tender auctionPeriod '{}': {}".format(
+                tender.get("id", ""), repr(e)
+            )
+        )
+        return
 
     await free_slots(tender["id"], auction_time, lots)
 
