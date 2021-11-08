@@ -89,7 +89,13 @@ async def planning_auction(
             nextDate += timedelta(days=1)
             continue
         dayStart, stream, plan = await get_date(mode, nextDate)
+        LOGGER.info(f"Finding free slot for {tender_id}. "
+                    f"Number of streams in plan {stream}. "
+                    f"Max streams: {streams}. "
+                    f"Plan got streams: {plan.get('streams_count', None)}. "
+                    f"Day of start is: {dayStart}")
         freeSlot = find_free_slot(plan)
+        LOGGER.info(f"Free slot was found for {tender_id}, {freeSlot}")
         if freeSlot:
             startDate, stream = freeSlot
             start, end, dayStart, new_slot = (
@@ -116,6 +122,7 @@ async def planning_auction(
             break
         nextDate += timedelta(days=1)
         skipped_days += 1
+    LOGGER.info(f"Setting date for {tender_id} in {plan['_id']}. In {stream} stream.")
     await set_date(
         plan_id=plan["_id"],
         end_time=end.time(),

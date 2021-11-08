@@ -11,6 +11,7 @@ from prozorro_chronograph.settings import (
     WORKING_DAY_START,
     TZ,
     STREAMS,
+    LOGGER,
 )
 from prozorro_chronograph.utils import parse_date
 
@@ -125,18 +126,23 @@ async def set_date(
             {"_id": plan_id}, {"$push": {"streams": new_stream}}
         )
     else:
+        LOGGER.info(f"Finding slot for {tender_id}")
         for num, stream in enumerate(streams["streams"]):
             if stream["stream_id"] == stream_id:
                 modified = False
+                LOGGER.info(f"Finding slot for {tender_id} in {stream['slots']}")
                 for slot in stream["slots"]:
                     if slot["time"] == start_time.isoformat():
                         slot["tender_id"] = tender_id
                         slot["lot_id"] = lot_id
                         modified = True
+                        LOGGER.info(f"Slot was found {slot} for tender: {tender_id}")
                         break
                 if not modified:
+                    LOGGER.info(f"Slot was not found for tender: {tender_id} setting default {default_slot}")
                     stream["slots"].append(default_slot)
                 break
+        LOGGER.info(f"Setting tender {tender_id} in stream {stream_id}, with value {stream}")
         await collection.update_one(
             {"_id": plan_id, "streams.stream_id": stream_id},
             {"$set": {f"streams.$": stream}},
