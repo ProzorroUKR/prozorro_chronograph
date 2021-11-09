@@ -63,7 +63,7 @@ review:
     - helm3 repo add prozorro $REPO_URL
     - helm3 repo update
     - helm3 --debug upgrade $CI_COMMIT_REF_SLUG --install prozorro/prozorro --namespace dev-prozorro
-          --set prozorro.api.image.tag=$API_TAG
+          --set prozorro-api.image.tag=$API_TAG
           --set deployAuctions=false
           --set deployAuction=true
           --wait
