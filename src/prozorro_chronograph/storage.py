@@ -156,8 +156,6 @@ def find_free_slot(plan: dict) -> Tuple[datetime, int]:
         if not streams:
             LOGGER.info(f"Plan {plan['_id']} have no streams")
             break
-        LOGGER.info(f"Checking free slot in stream {stream_id}")
-        LOGGER.info(f"Stream {stream_id} have slots: {streams[stream_id].get('slots', [])}")
         for slot in streams[stream_id].get("slots", []):
             LOGGER.info(f"Checking slot {slot}")
             if slot["tender_id"] is None:
@@ -171,7 +169,7 @@ def find_free_slot(plan: dict) -> Tuple[datetime, int]:
                 )
                 current_stream = plan["streams"][stream_id]["stream_id"]
                 return plan_date, current_stream
-        LOGGER.info(f"Slot was not found")
+    LOGGER.info(f"Slot was not found")
 
 
 def check_slot_to_be_free(lot_id: str, auction_time: datetime, lots: dict, plan_time: datetime) -> bool:

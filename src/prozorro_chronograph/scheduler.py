@@ -95,7 +95,7 @@ async def planning_auction(
                     f"Plan got streams: {plan.get('streams_count', None)}. "
                     f"Day of start is: {dayStart}")
         freeSlot = find_free_slot(plan)
-        LOGGER.info(f"Free slot was found for {tender_id}, {freeSlot}")
+        LOGGER.info(f"Free slot was found for tender {tender_id}, slot: {freeSlot}")
         if freeSlot:
             startDate, stream = freeSlot
             start, end, dayStart, new_slot = (
@@ -164,6 +164,7 @@ async def check_tender(tender: dict) -> dict:
 
     now = get_now()
     quick = SANDBOX_MODE and "quick" in tender.get("submissionMethodDetails", "")
+    LOGGER.info(f"Checking tender`s {tender['id']} auctionPeriod: {tender.get('auctionPeriod', {})}")
     if (
         not tender.get("lots")
         and "shouldStartAfter" in tender.get("auctionPeriod", {})
@@ -249,6 +250,7 @@ async def check_tender(tender: dict) -> dict:
 
 
 async def process_listing(server_id_cookie: str, tender: dict) -> None:
+    LOGGER.info(f"Start processing tender: {tender['id']}")
     run_date = get_now()
     await check_auction(tender)
     tid = tender.get("id")
@@ -303,6 +305,11 @@ async def process_listing(server_id_cookie: str, tender: dict) -> None:
                 args=["resync", tid, server_id_cookie],
                 replace_existing=True,
             )
+            LOGGER.info(f"Set resync job for tender {tid}")
+        else:
+            LOGGER.info(f"Resync job for tender {tid} already exists, don't set new")
+    else:
+        LOGGER.info(f"Tender {tid} don't need to resync")
     await asyncio.sleep(1)
 
 
@@ -383,6 +390,7 @@ async def recheck_tender(tender_id: str) -> datetime:
 
 
 async def resync_tender(tender_id: str) -> datetime:
+    LOGGER.info(f"Start resyncing tender {tender_id}")
     url = f"{BASE_URL}/{tender_id}{URL_SUFFIX}"
     next_check = None
     next_sync = None
@@ -421,6 +429,7 @@ async def resync_tender(tender_id: str) -> datetime:
         data = json.loads(data)
         tender = data["data"]
         changes = await check_tender(tender)
+        LOGGER.info(f"Changes to patch for tender {tender['id']}: {changes}")
         if changes:
             response = await SESSION.patch(
                 url,
