@@ -7,7 +7,6 @@ from prozorro_chronograph.api import create_app
 from prozorro_chronograph.scheduler import process_listing
 from prozorro_chronograph.storage import init_database
 
-
 async def data_handler(session: ClientSession, items: list) -> None:
     server_id_cookie = getattr(
         session.cookie_jar.filter_cookies(PUBLIC_API_HOST).get("SERVER_ID"), "value", None
