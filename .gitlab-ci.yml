@@ -37,7 +37,7 @@ test:
   before_script:
     - pip install -r requirements.txt
     - pip install -e .
-    - pip install pytest pytest-asyncio coverage
+    - pip install pytest pytest-asyncio coverage freezegun
   script:
     - echo '127.0.0.1:27017 mongodb' >> /etc/hosts
     - echo '127.0.0.1:5984 couchdb' >> /etc/hosts
