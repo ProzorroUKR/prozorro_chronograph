@@ -88,31 +88,3 @@ test_tender_data = {
 }
 if SANDBOX_MODE:
     test_tender_data["procurementMethodDetails"] = "quick, accelerator=1440"
-
-test_bids = [
-    {"tenderers": [test_organization], "value": {"amount": 469, "currency": "UAH", "valueAddedTaxIncluded": True}},
-    {"tenderers": [test_organization], "value": {"amount": 479, "currency": "UAH", "valueAddedTaxIncluded": True}},
-]
-test_lots = [
-    {
-        "title": "lot title",
-        "description": "lot description",
-        "value": test_tender_data["value"],
-        "minimalStep": test_tender_data["minimalStep"],
-    }
-]
-test_features = [
-    {
-        "code": "code_item",
-        "featureOf": "item",
-        "relatedItem": "1",
-        "title": "item feature",
-        "enum": [{"value": 0.01, "title": "good"}, {"value": 0.02, "title": "best"}],
-    },
-    {
-        "code": "code_tenderer",
-        "featureOf": "tenderer",
-        "title": "tenderer feature",
-        "enum": [{"value": 0.01, "title": "good"}, {"value": 0.02, "title": "best"}],
-    },
-]
