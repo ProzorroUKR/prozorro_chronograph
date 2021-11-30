@@ -27,7 +27,7 @@ build:
     - tags
 
 test:
-  image: docker-registry.prozorro.gov.ua/docker/images/python:3.8-alpine3.14
+  image: python:3.8
   stage: test
   tags:
     - kube-dev
@@ -35,7 +35,6 @@ test:
     - "bitnami/mongodb:latest"
     - "couchdb:1.6"
   before_script:
-    - apk add git gcc libssl-dev
     - pip install -r requirements.txt
     - pip install -e .
     - pip install pytest pytest-asyncio coverage
