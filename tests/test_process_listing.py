@@ -16,7 +16,7 @@ class TestTenderProcessListing(BaseTenderTest):
     @patch("prozorro_chronograph.scheduler.randint", return_value=2)
     @patch("prozorro_chronograph.scheduler.asyncio.sleep")
     @patch("prozorro_chronograph.scheduler.scheduler.add_job")
-    async def test_process_listing_without_next_check(self, mock_add_job, mock_sleep, *args):
+    async def test_process_listing_without_next_check(self, mock_add_job, mock_sleep, _, __, caplog):
         tender = {
             "id": uuid4().hex,
             "submissionMethodDetails": {"quick": "value"},
@@ -37,6 +37,9 @@ class TestTenderProcessListing(BaseTenderTest):
             args=["resync", tender["id"], server_id_cookie],
             replace_existing=True,
         )
+        assert f'Start processing tender: {tender["id"]}' in caplog.messages[0]
+        assert f'Set resync job for tender {tender["id"]}' in caplog.messages[1]
+        assert len(caplog.messages) == 2
         mock_sleep.assert_called_once_with(1)
 
     @freeze_time("2012-01-14")
@@ -44,10 +47,11 @@ class TestTenderProcessListing(BaseTenderTest):
     @patch("prozorro_chronograph.scheduler.randint", Mock(return_value=2))
     @patch("prozorro_chronograph.scheduler.asyncio.sleep")
     @patch("prozorro_chronograph.scheduler.scheduler.add_job")
-    async def test_process_listing_with_next_check(self, mock_add_job, mock_sleep, *args):
+    async def test_process_listing_with_next_check(self, mock_add_job, mock_sleep, _, caplog):
         next_check = get_now() - timedelta(days=2)
+        tenant_id = uuid4().hex
         tender = {
-            "id": uuid4().hex,
+            "id": tenant_id,
             "next_check": next_check.isoformat(),
         }
         server_id_cookie = "value"
@@ -64,6 +68,9 @@ class TestTenderProcessListing(BaseTenderTest):
             replace_existing=True,
             args=["recheck", tender["id"], server_id_cookie],
         )
+        assert f'Start processing tender: {tender["id"]}' in caplog.messages[0]
+        assert f"Tender {tenant_id} don't need to resync" in caplog.messages[1]
+        assert len(caplog.messages) == 2
         mock_sleep.assert_called_once_with(1)
 
     @freeze_time("2012-01-14")
@@ -71,10 +78,11 @@ class TestTenderProcessListing(BaseTenderTest):
     @patch("prozorro_chronograph.scheduler.randint", return_value=2)
     @patch("prozorro_chronograph.scheduler.asyncio.sleep")
     @patch("prozorro_chronograph.scheduler.scheduler.add_job")
-    async def test_process_listing_with_next_check_without_recheck_job(self, mock_add_job, mock_sleep, *args):
+    async def test_process_listing_with_next_check_without_recheck_job(self, mock_add_job, mock_sleep, _, __, caplog):
         next_check = get_now() + timedelta(days=2)
+        tenant_id = uuid4().hex
         tender = {
-            "id": uuid4().hex,
+            "id": tenant_id,
             "next_check": next_check.isoformat(),
         }
         server_id_cookie = "value"
@@ -90,4 +98,7 @@ class TestTenderProcessListing(BaseTenderTest):
             replace_existing=True,
             args=["recheck", tender["id"], server_id_cookie],
         )
+        assert f'Start processing tender: {tender["id"]}' in caplog.messages[0]
+        assert f"Tender {tenant_id} don't need to resync" in caplog.messages[1]
+        assert len(caplog.messages) == 2
         mock_sleep.assert_called_once_with(1)

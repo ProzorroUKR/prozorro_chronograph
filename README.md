@@ -27,6 +27,7 @@ Setup
 
 Then you can run tests
 ```
+pip install -r tests/requirements.txt
 pytest tests/
 ```
 
