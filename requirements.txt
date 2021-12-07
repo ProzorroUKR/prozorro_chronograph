@@ -40,7 +40,7 @@ git+git://github.com/ProzorroUKR/rfc6266.git@0.0.7#egg=rfc6266
 git+git://github.com/ProzorroUKR/request_id_middleware.git@0.1.2#egg=request_id_middleware
 git+git://github.com/ProzorroUKR/python-json-patch.git@1.14+jsondiff.unicode.replacefix.0#egg=jsonpatch
 
-git+git://github.com/ProzorroUKR/standards.git@1.0.12#egg=standards
+git+git://github.com/ProzorroUKR/standards.git@1.0.22#egg=standards
 git+git://github.com/ProzorroUKR/prozorro_crawler.git@1.1.5#egg=prozorro_crawler
 
 # For tests
