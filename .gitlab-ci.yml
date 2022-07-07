@@ -2,6 +2,7 @@ stages:
   - build
   - test
   - deploy
+  - cleanup
 
 variables:
   CI_TAG: ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
@@ -11,20 +12,29 @@ variables:
   COUCHDB_PASSWORD: admin
 
 
-
 build:
   image: docker:git
   stage: build
   tags:
     - shell
-  script:
+  before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  script:
     - docker build -t $CI_REGISTRY_IMAGE:$CI_TAG .
     - docker tag $CI_REGISTRY_IMAGE:$CI_TAG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   only:
     - branches
     - tags
+
+publish_latest:
+  extends: build
+  only:
+    - master
+  variables:
+    CI_TAG: "latest"
+  except:
+    - schedules
 
 test:
   image: python:3.8
@@ -94,3 +104,12 @@ stop_review:
   except:
     - master
   when: manual
+
+
+clenup-ci-image:
+  stage: cleanup
+  tags:
+    - shell
+  script:
+    - docker rmi -f $CI_TAG || true
+  when: always
