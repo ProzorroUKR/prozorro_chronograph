@@ -12,11 +12,13 @@ services:
 
   chronograph:
     build: .
+    command: ["python", "-m", "prozorro_chronograph.chronograph"]
     environment:
       - PYTHONUNBUFFERED=1
-      - API_OPT_FIELDS=status,auctionPeriod,lots,next_check
-      - PUBLIC_API_HOST=https://lb-api-sandbox-2.prozorro.gov.ua
+      - PUBLIC_API_HOST=http://api
       - MONGODB_URL=mongodb://root:example@mongo:27017
+      - CHRONOGRAPH_URL_SUFFIX=/chronograph
+      - SANDBOX_MODE=1
       - LOCK_ENABLED=yep
       - LOCK_PROCESS_NAME=prozorro-chronograph
     ports:
@@ -25,42 +27,51 @@ services:
       - mongo
     volumes:
       - "./src:/app"
+    networks:
+      - default
+      - openprocurementapi_default
 
-  chronograph_2:
+  auction:
     build: .
+    command: ["python", "-m", "prozorro_chronograph.auction"]
     environment:
       - PYTHONUNBUFFERED=1
-      - API_OPT_FIELDS=status,auctionPeriod,lots,next_check
       - PUBLIC_API_HOST=https://lb-api-sandbox-2.prozorro.gov.ua
       - MONGODB_URL=mongodb://root:example@mongo:27017
       - LOCK_ENABLED=yep
-      - LOCK_PROCESS_NAME=prozorro-chronograph
+      - LOCK_PROCESS_NAME=prozorro-chronograph-auction
     ports:
       - 8081:8080
     depends_on:
       - mongo
     volumes:
       - "./src:/app"
+#
+#  couchdb:
+#    image: "couchdb:1.6"
+#    ports:
+#      - 5984:5984
+#    environment:
+#      COUCHDB_USER: admin
+#      COUCHDB_PASSWORD: admin
+#
+#  api:
+#    build: src/opcr
+#    environment:
+#      SANDBOX_MODE: 'True'
+#    depends_on:
+#      - couchdb
+#      - mongo
+#    volumes:
+#      - "./src/opcr:/api/src/openprocurement:delegated"
+#      - "./src/opcr/docs:/api/docs:delegated"
+#      - "./src/opcr/etc:/api/etc:delegated"
+#    ports:
+#      - "8000:80"
+#    command: [ "gunicorn", "--bind", "0.0.0.0:80", "-k", "gevent", "--paste", "etc/service.ini", "--graceful-timeout=60", "--timeout=3600" ]
 
-  couchdb:
-    image: "couchdb:1.6"
-    ports:
-      - 5984:5984
-    environment:
-      COUCHDB_USER: admin
-      COUCHDB_PASSWORD: admin
 
-  api:
-    build: src/opcr
-    environment:
-      SANDBOX_MODE: 'True'
-    depends_on:
-      - couchdb
-      - mongo
-    volumes:
-      - "./src/opcr:/api/src/openprocurement:delegated"
-      - "./src/opcr/docs:/api/docs:delegated"
-      - "./src/opcr/etc:/api/etc:delegated"
-    ports:
-      - "8000:80"
-    command: [ "gunicorn", "--bind", "0.0.0.0:80", "-k", "gevent", "--paste", "etc/service.ini", "--graceful-timeout=60", "--timeout=3600" ]
+networks:
+    default: {}
+    openprocurementapi_default:
+        external: true

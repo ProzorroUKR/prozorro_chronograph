@@ -4,7 +4,6 @@ from aiohttp import ClientSession
 from random import randint
 from datetime import datetime, timedelta
 from typing import Tuple
-from prozorro_crawler.storage import get_feed_position
 from prozorro_crawler.settings import CRAWLER_USER_AGENT
 
 from prozorro_chronograph.storage import (
@@ -38,26 +37,36 @@ from prozorro_chronograph.utils import (
     parse_date,
 )
 
-SESSION = ClientSession()
+SESSION = ClientSession(
+    headers={
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_TOKEN}",
+        "User-Agent": CRAWLER_USER_AGENT
+    }
+)
+
+
+class RetryError(Exception):
+    pass
 
 
 async def push(mode: str, tender_id: str, server_id: str = None) -> None:
     tx = ty = 1
     while True:
-        if server_id is None:
-            feed_position = await get_feed_position()
-            server_id = feed_position.get("server_id") if feed_position else None
-        SESSION.cookie_jar.update_cookies({"SERVER_ID": server_id})
         try:
             if mode == "recheck":
-                data = await recheck_tender(tender_id)
+                await recheck_tender(tender_id)
             elif mode == "resync":
-                data = await resync_tender(tender_id)
+                await resync_tender(tender_id)
+            else:
+                LOGGER.error(f"Unexpected mode {mode}")
+                break
+        except RetryError:
+            pass
         except Exception as e:
             LOGGER.error(f"Error on {mode} tender {tender_id}: {repr(e)}")
         else:
-            if data != "repeat":
-                break
+            break
         await asyncio.sleep(tx)
         tx, ty = ty, tx + ty
 
@@ -249,6 +258,40 @@ async def check_tender(tender: dict) -> dict:
     return {}
 
 
+async def schedule_next_check(tender_id, next_check):
+    LOGGER.info(f"Start processing tender: {tender_id}")
+    job_id = f"recheck_{tender_id}"
+    now = get_now()
+    next_check = parse_date(next_check, TZ).astimezone(TZ)
+    run_date = now if now > next_check else next_check
+    scheduler.add_job(
+        push,
+        "date",
+        timezone=TZ,
+        id=job_id,
+        name=f"Recheck {tender_id}",
+        run_date=run_date + timedelta(seconds=randint(SMOOTHING_MIN, SMOOTHING_MAX)),
+        misfire_grace_time=60 * 60,
+        replace_existing=True,
+        args=["recheck", tender_id],
+    )
+
+
+async def schedule_auction_planner(tender_id):
+    run_date = get_now() + timedelta(seconds=randint(SMOOTHING_MIN, SMOOTHING_MAX))
+    scheduler.add_job(
+        push,
+        "date",
+        run_date=run_date,
+        id=f"resync_{tender_id}",
+        name=f"Resync {tender_id}",
+        misfire_grace_time=60 * 60,
+        args=["resync", tender_id],
+        replace_existing=True,
+    )
+    LOGGER.info(f"Set resync job for tender {tender_id} at {run_date.isoformat()}")
+
+
 async def process_listing(server_id_cookie: str, tender: dict) -> None:
     LOGGER.info(f"Start processing tender: {tender['id']}")
     run_date = get_now()
@@ -257,6 +300,7 @@ async def process_listing(server_id_cookie: str, tender: dict) -> None:
     next_check = tender.get("next_check")
 
     if next_check:
+        # moves to `schedule_next_check`
         check_args = dict(
             timezone=TZ,
             id=f"recheck_{tid}",
@@ -293,6 +337,7 @@ async def process_listing(server_id_cookie: str, tender: dict) -> None:
         and parse_date(tender["auctionPeriod"]["shouldStartAfter"], TZ).astimezone(TZ)
         > parse_date(tender["auctionPeriod"].get("startDate", "0001-01-03"), TZ)
     ):
+        # moves to `schedule_auction_planner`
         resync_job = scheduler.get_job(f"resync_{tid}")
         if not resync_job or resync_job.next_run_time > run_date + timedelta(minutes=1):
             scheduler.add_job(
@@ -319,35 +364,17 @@ async def recheck_tender(tender_id: str) -> datetime:
     response = await SESSION.patch(
         url,
         json={"data": {"id": tender_id}},
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_TOKEN}",
-            "User-Agent": CRAWLER_USER_AGENT
-        },
     )
     data = await response.text()
 
     if response.status == 429:
-        LOGGER.error(
-            "Error too many requests {} on getting tender '{}': {}".format(
-                response.status, url, data
-            ),
-        )
+        LOGGER.error(f"Error too many requests {response.status} on getting tender '{url}'")
         next_check = get_now() + timedelta(minutes=1)
     elif response.status != 200:
-        LOGGER.error(
-            "Error {} on checking tender '{}': {}".format(response.status, url, data)
-        )
+        LOGGER.error("Error {} on checking tender '{}': {}".format(response.status, url, data))
         if response.status == 422:
             next_check = get_now() + timedelta(minutes=1)
-            response = await SESSION.get(
-                url,
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {API_TOKEN}",
-                    "User-Agent": CRAWLER_USER_AGENT
-                },
-            )
+            response = await SESSION.get(url)
             data = await response.text()
             if response.status == 200:
                 data = json.loads(data)
@@ -389,20 +416,13 @@ async def recheck_tender(tender_id: str) -> datetime:
     return next_check and next_check.isoformat()
 
 
-async def resync_tender(tender_id: str) -> datetime:
+async def resync_tender(tender_id: str):
     LOGGER.info(f"Start resyncing tender {tender_id}")
     url = f"{BASE_URL}/{tender_id}{URL_SUFFIX}"
     next_check = None
     next_sync = None
 
-    response = await SESSION.get(
-        url,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_TOKEN}",
-            "User-Agent": CRAWLER_USER_AGENT
-        },
-    )
+    response = await SESSION.get(url)
     data = await response.text()
 
     if response.status == 429:
@@ -421,7 +441,7 @@ async def resync_tender(tender_id: str) -> datetime:
         if response.status in (404, 410):
             return
         elif response.status == 412:
-            return "repeat"
+            raise RetryError()
         next_sync = get_now() + timedelta(
             seconds=randint(SMOOTHING_REMIN, SMOOTHING_MAX)
         )
@@ -434,11 +454,6 @@ async def resync_tender(tender_id: str) -> datetime:
             response = await SESSION.patch(
                 url,
                 json={"data": changes},
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {API_TOKEN}",
-                    "User-Agent": CRAWLER_USER_AGENT
-                },
             )
             data = await response.text()
 

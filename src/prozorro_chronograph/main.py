@@ -1,11 +1,18 @@
 import asyncio
+import sentry_sdk
 from aiohttp import web, ClientSession
 from prozorro_crawler.main import main
-
-from prozorro_chronograph.settings import scheduler, PUBLIC_API_HOST, INVALID_STATUSES, LOGGER
+from prozorro_chronograph.settings import (
+    scheduler,
+    PUBLIC_API_HOST,
+    INVALID_STATUSES,
+    LOGGER,
+    SENTRY_DSN,
+)
 from prozorro_chronograph.api import create_app
 from prozorro_chronograph.scheduler import process_listing
 from prozorro_chronograph.storage import init_database
+
 
 async def data_handler(session: ClientSession, items: list) -> None:
     server_id_cookie = getattr(
@@ -35,4 +42,6 @@ async def run_services():
 
 
 if __name__ == "__main__":
+    if SENTRY_DSN:
+        sentry_sdk.init(dsn=SENTRY_DSN)
     main(data_handler, init_task=run_services)

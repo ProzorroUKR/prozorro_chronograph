@@ -20,6 +20,7 @@ API_TOKEN = os.environ.get("API_TOKEN", "chronograph")
 CHRONOGRAPH_HOST = os.environ.get("CHRONOGRAPH_HOST", "http://localhost:8080")
 SANDBOX_MODE = os.environ.get("SANDBOX_MODE", False)
 TZ = timezone(os.environ["TZ"] if "TZ" in os.environ else "Europe/Kiev")
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
 
 WORKING_DAY_START = time(11, 0)
 WORKING_DAY_END = time(16, 0)
