@@ -1,5 +1,6 @@
 stages:
   - build
+  - push
   - test
   - deploy
   - cleanup
@@ -21,6 +22,18 @@ build:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
     - docker build -t $CI_REGISTRY_IMAGE:$CI_TAG .
+  only:
+    - branches
+    - tags
+
+publish:
+  image: docker:git
+  stage: push
+  tags:
+    - shell
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  script:
     - docker tag $CI_REGISTRY_IMAGE:$CI_TAG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   only:
@@ -28,11 +41,12 @@ build:
     - tags
 
 publish_latest:
-  extends: build
+  extends: publish
+  script:
+    - docker tag $CI_REGISTRY_IMAGE:$CI_TAG $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
   only:
     - master
-  variables:
-    CI_TAG: "latest"
   except:
     - schedules
 
