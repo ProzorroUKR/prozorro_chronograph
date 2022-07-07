@@ -9,8 +9,6 @@ variables:
   CI_TAG: ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
   REPO_URL: http://repo-staging.dc.prozorro.gov.ua/repos/helm/
   MONGODB_ROOT_PASSWORD: example
-  COUCHDB_USER: admin
-  COUCHDB_PASSWORD: admin
 
 
 build:
@@ -57,14 +55,12 @@ test:
     - kube-dev
   services:
     - "bitnami/mongodb:latest"
-    - "couchdb:1.6"
   before_script:
     - pip install -r requirements.txt
     - pip install -e .
     - pip install -r tests/requirements.txt
   script:
     - echo '127.0.0.1:27017 mongodb' >> /etc/hosts
-    - echo '127.0.0.1:5984 couchdb' >> /etc/hosts
     - cd tests && coverage run -m pytest
     - coverage report
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'

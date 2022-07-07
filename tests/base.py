@@ -9,7 +9,6 @@ import pytest
 import standards
 from aiohttp.client import ClientSession
 from aiohttp.test_utils import TestClient, TestServer
-from couchdb import Server
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from prozorro_chronograph.api import create_app
@@ -179,16 +178,3 @@ class BaseTenderTest(BaseTest):
         assert resp.status == 200
         assert data["data"]["enquiryPeriod"] == update_data["enquiryPeriod"]
         assert data["data"]["tenderPeriod"] == update_data["tenderPeriod"]
-
-    @pytest.fixture
-    def tender_id(self, event_loop, couch):
-        tender_id = event_loop.run_until_complete(self.create_tender())
-        yield tender_id
-        doc = couch.get(tender_id)
-        couch.delete(doc)
-
-    @pytest.fixture
-    def couch(self):
-        server = Server(COUCH_URL)
-        db = server["openprocurement"]
-        return db
