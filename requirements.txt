@@ -32,6 +32,7 @@ venusian==3.0.0
 WebOb==1.8.6
 WebTest==2.0.35
 yarl==1.6.3
+sentry-sdk
 
 
 git+https://github.com/ProzorroUKR/openprocurement.subscribers.serverid.git@1.2#egg=openprocurement.subscribers.serverid
