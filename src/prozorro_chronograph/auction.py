@@ -34,7 +34,7 @@ async def data_handler(_: ClientSession, items: list) -> None:
     process_items_tasks = []
     for tender in items:
         process_items_tasks.append(
-            process_tender(tender["id"])
+            process_tender(tender)
         )
     if process_items_tasks:
         await asyncio.gather(*process_items_tasks)
