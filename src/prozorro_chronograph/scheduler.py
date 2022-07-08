@@ -510,7 +510,7 @@ async def resync_tender(tender_id: str):
             "date",
             run_date=next_sync + timedelta(seconds=randint(SMOOTHING_MIN, SMOOTHING_MAX)),
             timezone=TZ,
-            id=tender_id,
+            id=f"resync_{tender_id}",
             name=f"Resync {tender_id}",
             misfire_grace_time=60 * 60,
             replace_existing=True,
