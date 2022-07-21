@@ -22,7 +22,6 @@ PUBLIC_API_HOST = os.environ["PUBLIC_API_HOST"]
 MONGODB_URL = os.environ["MONGODB_URL"]
 MONGODB_DATABASE = os.environ["MONGODB_DATABASE"]
 APSCHEDULER_DATABASE = os.environ["APSCHEDULER_DATABASE"]
-COUCH_URL = os.environ["COUCH_URL"]
 
 token = base64.b64encode(b"token:").decode("utf-8")
 working_days = {}
